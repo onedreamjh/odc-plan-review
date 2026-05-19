@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ODC | Plan Review Report Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --green-900: #0d3d1e;
+    --green-800: #145229;
+    --green-700: #1a6835;
+    --green-600: #1e7a3c;
+    --green-500: #239646;
+    --green-400: #34b85f;
+    --green-300: #6dd190;
+    --green-100: #e8f7ed;
+    --green-50:  #f2fbf5;
+    --amber-600: #d97706;
+    --amber-100: #fef3c7;
+    --amber-50:  #fffbeb;
+    --red-600:   #dc2626;
+    --red-100:   #fee2e2;
+    --red-50:    #fef2f2;
+    --orange-600:#ea580c;
+    --orange-100:#ffedd5;
+    --blue-600:  #2563eb;
+    --blue-100:  #dbeafe;
+    --gray-900:  #111827;
+    --gray-700:  #374151;
+    --gray-500:  #6b7280;
+    --gray-300:  #d1d5db;
+    --gray-100:  #f3f4f6;
+    --gray-50:   #f9fafb;
+    --white:     #ffffff;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius:    10px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+  h1,h2,h3 { font-family: 'DM Serif Display', serif; }
+
+  /* NAV */
+  .nav {
+    background: var(--green-800);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 32px;
+    height: 60px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; letter-spacing: 0.01em; }
+  .nav-logo span { color: var(--green-300); }
+  .nav-divider { flex: 1; }
+  .nav-badge {
+    background: var(--green-600);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .nav-key-wrap {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-key-wrap label { font-size: 0.8rem; color: var(--green-300); font-weight: 500; white-space: nowrap; }
+  .nav-key-input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    width: 240px;
+    font-family: monospace;
+    outline: none;
+  }
+  .nav-key-input::placeholder { color: rgba(255,255,255,0.35); }
+  .nav-key-input:focus { border-color: var(--green-300); }
+
+  /* STEPPER */
+  .stepper-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-300);
+    padding: 0 32px;
+  }
+  .stepper {
+    display: flex;
+    gap: 0;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px 16px 0;
+    cursor: default;
+    flex: 1;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray-500);
+  }
+  .step.active { border-bottom-color: var(--green-600); color: var(--green-700); }
+  .step.done { color: var(--green-600); }
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step.done .step-num { background: var(--green-600); border-color: var(--green-600); color: #fff; }
+  .step.active .step-num { background: var(--green-100); }
+
+  /* MAIN CONTENT */
+  .main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+  /* CARDS */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-300);
+    overflow: hidden;
+  }
+  .card-header {
+    background: linear-gradient(135deg, var(--green-800) 0%, var(--green-700) 100%);
+    color: #fff;
+    padding: 20px 28px;
+  }
+  .card-header h2 { font-size: 1.3rem; margin-bottom: 4px; }
+  .card-header p { font-size: 0.85rem; color: var(--green-300); }
+  .card-body { padding: 28px; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.span2 { grid-column: span 2; }
+  label.form-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-700); letter-spacing: 0.03em; }
+  .form-input, .form-select, .form-textarea {
+    border: 1.5px solid var(--gray-300);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-900);
+    background: var(--white);
+    transition: border-color .15s;
+    outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--green-500); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-hint { font-size: 0.75rem; color: var(--gray-500); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; border: none; transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--green-600); color: #fff;
+  }
+  .btn-primary:hover { background: var(--green-700); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary {
+    background: var(--white); color: var(--green-700);
+    border: 1.5px solid var(--green-400);
+  }
+  .btn-secondary:hover { background: var(--green-50); }
+  .btn-ghost {
+    background: transparent; color: var(--gray-600);
+    border: 1.5px solid var(--gray-300);
+  }
+  .btn-ghost:hover { background: var(--gray-100); }
+  .btn-danger {
+    background: var(--red-50); color: var(--red-600);
+    border: 1.5px solid var(--red-100);
+  }
+  .btn-danger:hover { background: var(--red-100); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  .btn-lg { padding: 14px 32px; font-size: 1rem; border-radius: 12px; }
+
+  /* UPLOAD ZONE */
+  .drop-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-lg);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--gray-50);
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--green-500);
+    background: var(--green-50);
+  }
+  .drop-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .drop-title { font-weight: 600; color: var(--gray-700); margin-bottom: 4px; }
+  .drop-sub { font-size: 0.82rem; color: var(--gray-500); }
+
+  /* FILE LIST */
+  .file-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .file-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+  }
+  .file-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .file-name { font-size: 0.85rem; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { font-size: 0.75rem; color: var(--gray-500); flex-shrink: 0; }
+  .file-cat-select {
+    border: 1px solid var(--gray-300); border-radius: 6px;
+    padding: 4px 8px; font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-700); background: var(--white);
+    flex-shrink: 0;
+  }
+
+  /* GENERATE SECTION */
+  .generate-wrap { text-align: center; padding: 16px 0 8px; }
+  .generate-info {
+    background: var(--amber-50);
+    border: 1px solid var(--amber-100);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: var(--amber-600);
+    text-align: left;
+    margin-bottom: 20px;
+  }
+
+  /* LOADING */
+  .loading-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 24px; gap: 20px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--green-100);
+    border-top-color: var(--green-600);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-msg { font-size: 0.9rem; color: var(--gray-500); font-style: italic; }
+  .loading-title { font-size: 1.1rem; font-weight: 600; color: var(--green-700); }
+
+  /* REPORT */
+  .report-toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--gray-300);
+    background: var(--gray-50);
+  }
+  .report-body { padding: 28px; }
+  .report-section { margin-bottom: 32px; }
+  .report-section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--green-800);
+    border-bottom: 2px solid var(--green-100);
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .report-text { font-size: 0.9rem; line-height: 1.7; color: var(--gray-700); white-space: pre-wrap; }
+  .edit-btn {
+    margin-left: auto; font-size: 0.78rem; padding: 4px 10px;
+    background: var(--green-50); color: var(--green-700);
+    border: 1px solid var(--green-300); border-radius: 6px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  }
+  .edit-btn:hover { background: var(--green-100); }
+  .edit-textarea {
+    width: 100%; border: 1.5px solid var(--green-400);
+    border-radius: var(--radius); padding: 10px 12px;
+    font-size: 0.9rem; line-height: 1.7;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-900); min-height: 120px; resize: vertical;
+  }
+  .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .badge-critical { background: var(--red-100); color: var(--red-600); }
+  .badge-high { background: var(--orange-100); color: var(--orange-600); }
+  .badge-medium { background: var(--amber-100); color: var(--amber-600); }
+  .badge-low { background: var(--green-100); color: var(--green-700); }
+  .badge-achieved { background: var(--green-100); color: var(--green-700); }
+  .badge-progress { background: var(--blue-100); color: var(--blue-600); }
+  .badge-minimal { background: var(--amber-100); color: var(--amber-600); }
+  .badge-not-started { background: var(--gray-100); color: var(--gray-500); }
+  .badge-neutral { background: var(--gray-100); color: var(--gray-700); }
+
+  /* CARDS in report */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info-item { background: var(--gray-50); border-radius: 8px; padding: 10px 14px; }
+  .info-item .info-label { font-size: 0.72rem; font-weight: 600; color: var(--gray-500); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px; }
+  .info-item .info-val { font-size: 0.9rem; font-weight: 500; color: var(--gray-900); }
+
+  .goal-card {
+    border: 1px solid var(--gray-300); border-radius: var(--radius);
+    margin-bottom: 12px; overflow: hidden;
+  }
+  .goal-card-header {
+    background: var(--gray-50); padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--gray-300);
+  }
+  .goal-card-body { padding: 14px 16px; font-size: 0.87rem; line-height: 1.65; color: var(--gray-700); }
+
+  .gap-card {
+    border-left: 4px solid;
+    background: var(--white);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+  .gap-card.critical { border-color: var(--red-600); }
+  .gap-card.high { border-color: var(--orange-600); }
+  .gap-card.medium { border-color: var(--amber-600); }
+  .gap-card.low { border-color: var(--green-500); }
+  .gap-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .gap-desc { font-size: 0.84rem; color: var(--gray-600); line-height: 1.6; }
+  .gap-rec { font-size: 0.82rem; color: var(--green-700); font-weight: 500; margin-top: 6px; }
+
+  .therapy-card {
+    border: 1px solid var(--gray-300); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .therapy-card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .therapy-name { font-weight: 700; font-size: 0.9rem; flex: 1; }
+  .therapy-detail { font-size: 0.84rem; color: var(--gray-600); line-height: 1.6; }
+  .therapy-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .therapy-chip {
+    background: var(--gray-100); color: var(--gray-700);
+    border-radius: 6px; padding: 3px 10px; font-size: 0.75rem; font-weight: 500;
+  }
+  .therapy-chip.green { background: var(--green-100); color: var(--green-800); }
+
+  .support-cat-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .support-cat-table th { background: var(--green-800); color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.03em; }
+  .support-cat-table td { padding: 9px 14px; border-bottom: 1px solid var(--gray-300); }
+  .support-cat-table tr:last-child td { border-bottom: none; }
+  .support-cat-table tr:nth-child(even) td { background: var(--gray-50); }
+
+  .perf-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+  }
+  .perf-strong { background: var(--green-100); color: var(--green-700); }
+  .perf-adequate { background: var(--blue-100); color: var(--blue-600); }
+  .perf-below { background: var(--amber-100); color: var(--amber-600); }
+  .perf-concerning { background: var(--red-100); color: var(--red-600); }
+
+  /* PRINT */
+  @media print {
+    .nav, .stepper-wrap, .report-toolbar, .edit-btn, .edit-actions, .generate-wrap { display: none !important; }
+    .card { box-shadow: none; border: none; }
+    .main { padding: 0; max-width: 100%; }
+    body { background: white; }
+    .report-section { page-break-inside: avoid; }
+  }
+
+  /* ALERTS */
+  .alert {
+    border-radius: var(--radius); padding: 12px 16px;
+    font-size: 0.85rem; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .alert-error { background: var(--red-50); color: var(--red-600); border: 1px solid var(--red-100); }
+  .alert-success { background: var(--green-50); color: var(--green-700); border: 1px solid var(--green-100); }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap { height: 4px; background: var(--gray-200); border-radius: 99px; margin: 8px 0; }
+  .progress-bar-fill { height: 100%; background: var(--green-500); border-radius: 99px; transition: width 0.3s; }
+
+  /* SEPARATOR */
+  .sep { height: 1px; background: var(--gray-300); margin: 20px 0; }
+
+  /* SUMMARY BOX */
+  .exec-box {
+    background: linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+    border-radius: var(--radius-lg); padding: 24px 28px; color: #fff; margin-bottom: 24px;
+  }
+  .exec-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.15rem; margin-bottom: 10px; }
+  .exec-box p { font-size: 0.88rem; line-height: 1.7; color: rgba(255,255,255,0.85); white-space: pre-wrap; }
+
+  .compliance-flag {
+    background: var(--amber-50); border: 1px solid var(--amber-100);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 8px;
+    font-size: 0.84rem; color: var(--amber-600);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useCallback } = React;
+
+const DOC_CATEGORIES = [
+  "Occupational Therapy Report",
+  "Speech Pathology Report",
+  "Physiotherapy Report",
+  "Psychology / Behaviour Support Report",
+  "Medical Summary",
+  "Dietitian Report",
+  "Functional Capacity Assessment",
+  "Previous NDIS Plan",
+  "Plan Management Statement",
+  "Allied Health Other",
+  "Other"
+];
+
+const LOADING_MSGS = [
+  "Reading uploaded therapy reports…",
+  "Applying NDIS Practice Standards and Pricing Arrangements 2024-25…",
+  "Identifying support needs and funding gaps…",
+  "Reviewing goal progress and allied health recommendations…",
+  "Cross-referencing registration groups and support categories…",
+  "Drafting plan review report…",
+  "Finalising recommendations and compliance flags…"
+];
+
+const NDIS_SYSTEM_PROMPT = `You are an expert NDIS Support Coordinator with deep knowledge of:
+- The NDIS Act 2013 and NDIS Rules
+- NDIS Practice Standards (including Support Coordination Standard 2.6)
+- NDIS Pricing Arrangements and Price Limits 2024-25 (all 16 support categories and registration groups)
+- NDIS Quality and Safeguards Commission requirements
+- Functional impact language and capacity building principles
+- Plan review best practices and participant-centred planning
+
+Your task is to analyse the provided therapy, medical, and clinical reports and produce a comprehensive Support Coordinator Plan Review Report in JSON format.
+
+You must:
+1. Extract key information from all provided documents
+2. Identify progress on current NDIS goals
+3. Summarise allied health/therapy recommendations
+4. Identify gaps in funding, supports, or assessments
+5. Recommend appropriate NDIS support categories and allocations
+6. Flag compliance or safeguarding concerns
+7. Present findings using professional NDIS terminology
+
+NDIS Support Categories (2024-25):
+01 - Daily Activities (ADL/IADL support, personal care)
+02 - Social Community & Civic Participation
+03 - Consumables
+04 - Assistive Technology
+05 - Home Modifications
+06 - Support Coordination (07 = Specialist SC)
+07 - Improved Living Arrangements
+08 - Increased Social & Community Participation
+09 - Finding & Keeping a Job
+10 - Improved Health & Wellbeing
+11 - Improved Learning
+12 - Improved Life Choices (Plan Management)
+13 - Improved Daily Living (Therapies)
+14 - Improved Relationships
+15 - Improved Health & Wellbeing
+16 - Support Coordination
+
+RESPOND ONLY WITH A VALID JSON OBJECT. No markdown, no preamble, no explanation outside the JSON. Use this exact structure:
+
+{
+  "participantName": "string",
+  "reportDate": "string",
+  "executiveSummary": "string (3-4 sentences capturing the overall picture, key needs, and this plan review's main purpose)",
+  "planPerformance": {
+    "rating": "Strong | Adequate | Below Expectations | Concerning",
+    "rationale": "string"
+  },
+  "goals": [
+    {
+      "goalTitle": "string",
+      "status": "Achieved | In Progress | Minimal Progress | Not Started",
+      "evidence": "string",
+      "recommendation": "string"
+    }
+  ],
+  "alliedHealthRecommendations": [
+    {
+      "reportType": "string (e.g. Occupational Therapy)",
+      "therapistRecommendation": "string",
+      "ndisCategory": "string (e.g. 13 - Improved Daily Living)",
+      "priority": "Critical | High | Medium | Low",
+      "estimatedAnnualCost": "string (e.g. $8,400)"
+    }
+  ],
+  "gaps": [
+    {
+      "gapTitle": "string",
+      "description": "string",
+      "priority": "Critical | High | Medium | Low",
+      "recommendation": "string"
+    }
+  ],
+  "recommendationsForNextPlan": "string (paragraph form, 5-8 dot points as \\n• items)",
+  "supportCategories": [
+    {
+      "category": "string (e.g. 01 - Daily Activities)",
+      "registrationGroup": "string",
+      "currentAllocation": "string (or 'Not funded')",
+      "requestedAllocation": "string",
+      "rationale": "string"
+    }
+  ],
+  "healthAndMedical": "string",
+  "housingAndLiving": "string",
+  "dailyLiving": "string",
+  "communityParticipation": "string",
+  "capacityBuilding": "string",
+  "currentFundedSupports": "string",
+  "informalSupports": "string",
+  "participantVoice": "string (what the participant/family have indicated they want)",
+  "scObservations": "string (support coordinator's observations and professional judgement)",
+  "complianceFlags": ["string"]
+}`;
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function guessCategory(name) {
+  const n = name.toLowerCase();
+  if (n.includes('ot') || n.includes('occupational')) return "Occupational Therapy Report";
+  if (n.includes('sp') || n.includes('speech')) return "Speech Pathology Report";
+  if (n.includes('physio')) return "Physiotherapy Report";
+  if (n.includes('psych') || n.includes('behav')) return "Psychology / Behaviour Support Report";
+  if (n.includes('medical') || n.includes('gp') || n.includes('doctor')) return "Medical Summary";
+  if (n.includes('diet') || n.includes('nutrition')) return "Dietitian Report";
+  if (n.includes('functional') || n.includes('fca') || n.includes('capacity')) return "Functional Capacity Assessment";
+  if (n.includes('plan') && (n.includes('prev') || n.includes('ndis'))) return "Previous NDIS Plan";
+  return "Other";
+}
+
+function Step1({ data, onChange, onNext }) {
+  const handleChange = (k, v) => onChange({ ...data, [k]: v });
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Participant Information</h2>
+        <p>Enter participant details and support coordination context</p>
+      </div>
+      <div className="card-body">
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Participant Full Name *</label>
+            <input className="form-input" placeholder="e.g. John Smith" value={data.name||''} onChange={e=>handleChange('name',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">NDIS Number</label>
+            <input className="form-input" placeholder="43XXXXXXXX" value={data.ndisNum||''} onChange={e=>handleChange('ndisNum',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Date of Birth</label>
+            <input className="form-input" type="date" value={data.dob||''} onChange={e=>handleChange('dob',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Primary Disability / Diagnosis</label>
+            <input className="form-input" placeholder="e.g. ASD, ABI, SCI" value={data.diagnosis||''} onChange={e=>handleChange('diagnosis',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Current Plan Start Date</label>
+            <input className="form-input" type="date" value={data.planStart||''} onChange={e=>handleChange('planStart',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Current Plan End Date</label>
+            <input className="form-input" type="date" value={data.planEnd||''} onChange={e=>handleChange('planEnd',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Support Coordinator Name</label>
+            <input className="form-input" placeholder="Your name" value={data.scName||''} onChange={e=>handleChange('scName',e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Plan Management Type</label>
+            <select className="form-select" value={data.planMgmt||''} onChange={e=>handleChange('planMgmt',e.target.value)}>
+              <option value="">Select…</option>
+              <option>NDIA Managed</option>
+              <option>Plan Managed</option>
+              <option>Self Managed</option>
+              <option>Combination</option>
+            </select>
+          </div>
+          <div className="form-group span2">
+            <label className="form-label">Current NDIS Goals (one per line)</label>
+            <textarea className="form-textarea" rows={4} placeholder="e.g.&#10;Increase independence in daily living activities&#10;Improve communication skills&#10;Participate in community activities" value={data.goals||''} onChange={e=>handleChange('goals',e.target.value)}/>
+          </div>
+          <div className="form-group span2">
+            <label className="form-label">Additional Context / SC Notes</label>
+            <textarea className="form-textarea" rows={3} placeholder="Anything additional the AI should know: participant circumstances, family concerns, recent changes, etc." value={data.context||''} onChange={e=>handleChange('context',e.target.value)}/>
+          </div>
+        </div>
+        <div style={{marginTop:24,display:'flex',justifyContent:'flex-end'}}>
+          <button className="btn btn-primary btn-lg" onClick={onNext} disabled={!data.name}>
+            Next: Upload Reports →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step2({ files, setFiles, onNext, onBack }) {
+  const inputRef = useRef();
+  const [drag, setDrag] = useState(false);
+
+  const addFiles = (newFiles) => {
+    const arr = Array.from(newFiles).map(f => ({
+      file: f,
+      id: Math.random().toString(36).slice(2),
+      category: guessCategory(f.name),
+      error: f.size > 32*1024*1024 ? 'File too large (max 32MB)' : null
+    }));
+    setFiles(prev => [...prev, ...arr]);
+  };
+
+  const onDrop = useCallback((e) => {
+    e.preventDefault(); setDrag(false);
+    addFiles(e.dataTransfer.files);
+  }, []);
+
+  const removeFile = (id) => setFiles(prev => prev.filter(f => f.id !== id));
+  const updateCat = (id, cat) => setFiles(prev => prev.map(f => f.id===id ? {...f, category:cat} : f));
+
+  const icons = { pdf:'📄', png:'🖼️', jpg:'🖼️', jpeg:'🖼️' };
+  const getIcon = (name) => icons[name.split('.').pop()?.toLowerCase()] || '📎';
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Upload Clinical Reports</h2>
+        <p>Attach all relevant therapy, medical, and assessment documents</p>
+      </div>
+      <div className="card-body">
+        <div
+          className={`drop-zone${drag?' drag-over':''}`}
+          onDragOver={e=>{e.preventDefault();setDrag(true);}}
+          onDragLeave={()=>setDrag(false)}
+          onDrop={onDrop}
+          onClick={()=>inputRef.current.click()}
+        >
+          <div className="drop-icon">📁</div>
+          <div className="drop-title">Drag & drop files here, or click to browse</div>
+          <div className="drop-sub">Accepts PDF and images (JPG, PNG) · Max 32MB per file</div>
+          <input ref={inputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>addFiles(e.target.files)}/>
+        </div>
+
+        {files.length > 0 && (
+          <div className="file-list">
+            {files.map(f=>(
+              <div className="file-item" key={f.id} style={f.error?{borderColor:'var(--red-600)',background:'var(--red-50)'}:{}}>
+                <span className="file-icon">{getIcon(f.file.name)}</span>
+                <span className="file-name" title={f.file.name}>{f.file.name}</span>
+                <span className="file-size">{formatBytes(f.file.size)}</span>
+                {!f.error && (
+                  <select className="file-cat-select" value={f.category} onChange={e=>updateCat(f.id,e.target.value)}>
+                    {DOC_CATEGORIES.map(c=><option key={c}>{c}</option>)}
+                  </select>
+                )}
+                {f.error && <span style={{fontSize:'0.78rem',color:'var(--red-600)',fontWeight:600}}>{f.error}</span>}
+                <button onClick={()=>removeFile(f.id)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.1rem',color:'var(--gray-500)',padding:'0 2px'}} title="Remove">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{marginTop:24, display:'flex', justifyContent:'space-between'}}>
+          <button className="btn btn-ghost" onClick={onBack}>← Back</button>
+          <button className="btn btn-primary btn-lg" onClick={onNext} disabled={files.filter(f=>!f.error).length===0}>
+            Generate Report ({files.filter(f=>!f.error).length} file{files.filter(f=>!f.error).length!==1?'s':''}) →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step3({ participant, files, apiKey, onReport, onBack, onError }) {
+  const [loading, setLoading] = useState(false);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState('');
+
+  const run = async () => {
+    if (!apiKey) { setError('Please enter your Anthropic API key in the top navigation bar.'); return; }
+    setLoading(true); setError(''); setProgress(10);
+
+    // Cycle through loading messages
+    let mi = 0;
+    const interval = setInterval(() => {
+      mi = (mi + 1) % LOADING_MSGS.length;
+      setMsgIdx(mi);
+      setProgress(p => Math.min(p + 10, 85));
+    }, 2200);
+
+    try {
+      // Build content array
+      const content = [];
+
+      // Build participant context
+      const goals = participant.goals ? participant.goals.split('\n').filter(Boolean).map((g,i)=>`${i+1}. ${g}`).join('\n') : 'Not specified';
+      const userText = `PARTICIPANT DETAILS:
+Name: ${participant.name || 'Not specified'}
+NDIS Number: ${participant.ndisNum || 'Not specified'}
+Date of Birth: ${participant.dob || 'Not specified'}
+Primary Diagnosis: ${participant.diagnosis || 'Not specified'}
+Current Plan: ${participant.planStart || '?'} to ${participant.planEnd || '?'}
+Plan Management: ${participant.planMgmt || 'Not specified'}
+Support Coordinator: ${participant.scName || 'Not specified'}
+
+CURRENT NDIS GOALS:
+${goals}
+
+ADDITIONAL SC NOTES:
+${participant.context || 'None provided'}
+
+DOCUMENTS PROVIDED (${files.length}):
+${files.map((f,i)=>`${i+1}. ${f.category}: ${f.file.name}`).join('\n')}
+
+Please analyse all attached documents and generate the comprehensive plan review report JSON as instructed.`;
+
+      content.push({ type: 'text', text: userText });
+
+      // Attach files
+      for (const f of files) {
+        if (f.error) continue;
+        const b64 = await fileToBase64(f.file);
+        const ext = f.file.name.split('.').pop().toLowerCase();
+        if (ext === 'pdf') {
+          content.push({
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: b64 },
+            title: `${f.category}: ${f.file.name}`
+          });
+        } else {
+          const mt = ext === 'png' ? 'image/png' : 'image/jpeg';
+          content.push({
+            type: 'image',
+            source: { type: 'base64', media_type: mt, data: b64 }
+          });
+        }
+      }
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'pdfs-2024-09-25',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 16000,
+          system: NDIS_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content }]
+        })
+      });
+
+      clearInterval(interval);
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error?.message || `API error ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const raw = data.content.map(c=>c.text||'').join('');
+      const clean = raw.replace(/```json|```/g,'').trim();
+      const report = JSON.parse(clean);
+      setProgress(100);
+      setTimeout(() => onReport(report), 300);
+    } catch (e) {
+      clearInterval(interval);
+      setError(e.message || 'An error occurred. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Generate Plan Review Report</h2>
+        <p>AI will analyse all uploaded documents and produce a comprehensive report</p>
+      </div>
+      <div className="card-body">
+        {loading ? (
+          <div className="loading-wrap">
+            <div className="spinner"></div>
+            <div className="loading-title">Analysing documents…</div>
+            <div className="loading-msg">{LOADING_MSGS[msgIdx]}</div>
+            <div style={{width:'100%',maxWidth:360}}>
+              <div className="progress-bar-wrap"><div className="progress-bar-fill" style={{width:progress+'%'}}/></div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{background:'var(--green-50)',border:'1px solid var(--green-200)',borderRadius:'var(--radius)',padding:'16px 20px',marginBottom:20}}>
+              <div style={{fontWeight:700,color:'var(--green-800)',marginBottom:8}}>Ready to generate</div>
+              <div style={{fontSize:'0.86rem',color:'var(--gray-700)',lineHeight:1.6}}>
+                <strong>Participant:</strong> {participant.name}<br/>
+                <strong>Documents:</strong> {files.filter(f=>!f.error).length} file(s) — {files.filter(f=>!f.error).map(f=>f.category).join(', ')}<br/>
+                <strong>Goals:</strong> {participant.goals ? participant.goals.split('\n').filter(Boolean).length + ' goal(s)' : 'Not specified'}
+              </div>
+            </div>
+            <div className="generate-info">
+              ℹ️ Ensure your Anthropic API key is entered in the navigation bar. Estimated cost: $0.05–$0.30 per report depending on document size.
+            </div>
+            {error && <div className="alert alert-error" style={{marginBottom:16}}>⚠️ {error}</div>}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <button className="btn btn-ghost" onClick={onBack}>← Back</button>
+              <button className="btn btn-primary btn-lg" onClick={run} style={{fontSize:'1.05rem',padding:'14px 40px'}}>
+                🤖 Generate Report
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReportSection({ title, children, icon, editable, text, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(text||'');
+  const save = () => { onSave && onSave(val); setEditing(false); };
+  return (
+    <div className="report-section">
+      <div className="report-section-title">
+        {icon && <span>{icon}</span>}
+        {title}
+        {editable && !editing && <button className="edit-btn" onClick={()=>setEditing(true)}>✏️ Edit</button>}
+      </div>
+      {editable ? (
+        editing ? (
+          <>
+            <textarea className="edit-textarea" value={val} onChange={e=>setVal(e.target.value)} rows={6}/>
+            <div className="edit-actions">
+              <button className="btn btn-primary" style={{fontSize:'0.82rem',padding:'6px 14px'}} onClick={save}>Save</button>
+              <button className="btn btn-ghost" style={{fontSize:'0.82rem',padding:'6px 14px'}} onClick={()=>{setVal(text||'');setEditing(false);}}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <div className="report-text">{val}</div>
+        )
+      ) : children}
+    </div>
+  );
+}
+
+function Report({ report: initialReport, participant, onBack, onRestart }) {
+  const [report, setReport] = useState(initialReport);
+
+  const update = (key, val) => setReport(r=>({...r,[key]:val}));
+
+  const perfClass = { Strong:'perf-strong', Adequate:'perf-adequate', 'Below Expectations':'perf-below', Concerning:'perf-concerning' };
+  const statusClass = { Achieved:'badge-achieved', 'In Progress':'badge-progress', 'Minimal Progress':'badge-minimal', 'Not Started':'badge-not-started' };
+  const priorityClass = { Critical:'badge-critical', High:'badge-high', Medium:'badge-medium', Low:'badge-low' };
+  const gapClass = { Critical:'critical', High:'high', Medium:'medium', Low:'low' };
+
+  const printReport = () => window.print();
+  const copyReport = () => {
+    const lines = [
+      `NDIS PLAN REVIEW REPORT`,
+      `Participant: ${report.participantName || participant.name}`,
+      `Report Date: ${report.reportDate || new Date().toLocaleDateString('en-AU')}`,
+      ``,
+      `EXECUTIVE SUMMARY`,
+      report.executiveSummary,
+      ``,
+      `PLAN PERFORMANCE: ${report.planPerformance?.rating}`,
+      report.planPerformance?.rationale,
+      ``,
+      `GOALS PROGRESS`,
+      ...(report.goals||[]).map(g=>`[${g.status}] ${g.goalTitle}\nEvidence: ${g.evidence}\nRecommendation: ${g.recommendation}`),
+      ``,
+      `ALLIED HEALTH RECOMMENDATIONS`,
+      ...(report.alliedHealthRecommendations||[]).map(t=>`${t.reportType} [${t.priority}]: ${t.therapistRecommendation}\nNDIS Category: ${t.ndisCategory} | Est. Cost: ${t.estimatedAnnualCost}`),
+      ``,
+      `GAPS & UNMET NEEDS`,
+      ...(report.gaps||[]).map(g=>`[${g.priority}] ${g.gapTitle}: ${g.description}\nRecommendation: ${g.recommendation}`),
+      ``,
+      `RECOMMENDATIONS FOR NEXT PLAN`,
+      report.recommendationsForNextPlan,
+    ];
+    navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Report copied to clipboard!'));
+  };
+
+  return (
+    <div className="card">
+      <div className="report-toolbar">
+        <button className="btn btn-secondary" onClick={printReport}>🖨️ Print / Save PDF</button>
+        <button className="btn btn-ghost" onClick={copyReport}>📋 Copy as Text</button>
+        <div style={{flex:1}}/>
+        <button className="btn btn-ghost" onClick={onBack} style={{fontSize:'0.82rem'}}>← Edit & Regenerate</button>
+        <button className="btn btn-danger" onClick={onRestart} style={{fontSize:'0.82rem'}}>New Report</button>
+      </div>
+      <div className="report-body">
+
+        {/* HEADER */}
+        <div style={{marginBottom:24}}>
+          <h1 style={{fontFamily:'DM Serif Display, serif',fontSize:'1.8rem',color:'var(--green-900)',marginBottom:4}}>NDIS Plan Review Report</h1>
+          <div style={{display:'flex',gap:20,fontSize:'0.85rem',color:'var(--gray-500)'}}>
+            <span><strong>Participant:</strong> {report.participantName || participant.name}</span>
+            <span><strong>NDIS:</strong> {participant.ndisNum || '—'}</span>
+            <span><strong>SC:</strong> {participant.scName || '—'}</span>
+            <span><strong>Date:</strong> {report.reportDate || new Date().toLocaleDateString('en-AU')}</span>
+          </div>
+          <div style={{display:'flex',gap:10,marginTop:10,flexWrap:'wrap'}}>
+            <span className="badge badge-neutral">Plan Management: {participant.planMgmt||'—'}</span>
+            <span className="badge badge-neutral">Plan Period: {participant.planStart||'?'} – {participant.planEnd||'?'}</span>
+            {participant.diagnosis && <span className="badge badge-neutral">{participant.diagnosis}</span>}
+          </div>
+        </div>
+
+        <div className="sep"/>
+
+        {/* EXECUTIVE SUMMARY */}
+        {report.executiveSummary && (
+          <div className="exec-box">
+            <h3>Executive Summary</h3>
+            <p>{report.executiveSummary}</p>
+          </div>
+        )}
+
+        {/* PLAN PERFORMANCE */}
+        {report.planPerformance && (
+          <ReportSection title="Plan Performance" icon="📊">
+            <div style={{display:'flex',alignItems:'flex-start',gap:16,flexWrap:'wrap'}}>
+              <span className={`perf-badge ${perfClass[report.planPerformance.rating]||'perf-adequate'}`}>
+                {report.planPerformance.rating==='Strong'?'✅':report.planPerformance.rating==='Adequate'?'🔵':report.planPerformance.rating==='Below Expectations'?'⚠️':'🔴'} {report.planPerformance.rating}
+              </span>
+              <p style={{fontSize:'0.87rem',color:'var(--gray-700)',lineHeight:1.65,flex:1}}>{report.planPerformance.rationale}</p>
+            </div>
+          </ReportSection>
+        )}
+
+        {/* GOALS */}
+        {report.goals?.length > 0 && (
+          <ReportSection title="Progress Against Goals" icon="🎯">
+            {report.goals.map((g,i)=>(
+              <div className="goal-card" key={i}>
+                <div className="goal-card-header">
+                  <span className={`badge ${statusClass[g.status]||'badge-neutral'}`}>{g.status}</span>
+                  <span style={{fontWeight:600,fontSize:'0.9rem'}}>{g.goalTitle}</span>
+                </div>
+                <div className="goal-card-body">
+                  <div style={{marginBottom:6}}><strong>Evidence: </strong>{g.evidence}</div>
+                  <div style={{color:'var(--green-700)'}}><strong>Recommendation: </strong>{g.recommendation}</div>
+                </div>
+              </div>
+            ))}
+          </ReportSection>
+        )}
+
+        {/* ALLIED HEALTH RECOMMENDATIONS */}
+        {report.alliedHealthRecommendations?.length > 0 && (
+          <ReportSection title="Allied Health & Therapy Recommendations" icon="🏥">
+            {report.alliedHealthRecommendations.map((t,i)=>(
+              <div className="therapy-card" key={i}>
+                <div className="therapy-card-top">
+                  <div className="therapy-name">{t.reportType}</div>
+                  <span className={`badge ${priorityClass[t.priority]||'badge-neutral'}`}>{t.priority}</span>
+                </div>
+                <div className="therapy-detail">{t.therapistRecommendation}</div>
+                <div className="therapy-meta">
+                  <span className="therapy-chip green">📋 {t.ndisCategory}</span>
+                  {t.estimatedAnnualCost && <span className="therapy-chip">💰 {t.estimatedAnnualCost}/yr</span>}
+                </div>
+              </div>
+            ))}
+          </ReportSection>
+        )}
+
+        {/* GAPS */}
+        {report.gaps?.length > 0 && (
+          <ReportSection title="⚠️ Gaps & Unmet Needs" icon="">
+            {report.gaps.map((g,i)=>(
+              <div className={`gap-card ${gapClass[g.priority]||'medium'}`} key={i}>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                  <span className={`badge ${priorityClass[g.priority]||'badge-medium'}`}>{g.priority}</span>
+                  <div className="gap-title">{g.gapTitle}</div>
+                </div>
+                <div className="gap-desc">{g.description}</div>
+                {g.recommendation && <div className="gap-rec">→ {g.recommendation}</div>}
+              </div>
+            ))}
+          </ReportSection>
+        )}
+
+        {/* RECOMMENDATIONS FOR NEXT PLAN */}
+        <ReportSection title="Recommendations for Next Plan" icon="📝" editable text={report.recommendationsForNextPlan} onSave={v=>update('recommendationsForNextPlan',v)}/>
+
+        {/* SUPPORT CATEGORIES */}
+        {report.supportCategories?.length > 0 && (
+          <ReportSection title="Requested Support Categories" icon="💼">
+            <div style={{overflowX:'auto'}}>
+              <table className="support-cat-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Registration Group</th>
+                    <th>Current Allocation</th>
+                    <th>Requested Allocation</th>
+                    <th>Rationale</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.supportCategories.map((c,i)=>(
+                    <tr key={i}>
+                      <td style={{fontWeight:600}}>{c.category}</td>
+                      <td>{c.registrationGroup}</td>
+                      <td>{c.currentAllocation}</td>
+                      <td style={{color:'var(--green-700)',fontWeight:600}}>{c.requestedAllocation}</td>
+                      <td style={{fontSize:'0.8rem'}}>{c.rationale}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ReportSection>
+        )}
+
+        <div className="sep"/>
+
+        {/* NARRATIVE SECTIONS */}
+        {[
+          {key:'healthAndMedical',title:'Health & Medical',icon:'⚕️'},
+          {key:'housingAndLiving',title:'Housing & Living Arrangements',icon:'🏠'},
+          {key:'dailyLiving',title:'Daily Living',icon:'🛁'},
+          {key:'communityParticipation',title:'Community & Social Participation',icon:'🤝'},
+          {key:'capacityBuilding',title:'Capacity Building',icon:'📈'},
+          {key:'currentFundedSupports',title:'Current Funded Supports',icon:'✅'},
+          {key:'informalSupports',title:'Informal Supports & Carer Context',icon:'👨‍👩‍👧'},
+          {key:'participantVoice',title:'Participant Voice & Aspirations',icon:'💬'},
+          {key:'scObservations',title:'Support Coordinator Observations',icon:'👁️'},
+        ].map(s=>report[s.key] ? (
+          <ReportSection key={s.key} title={s.title} icon={s.icon} editable text={report[s.key]} onSave={v=>update(s.key,v)}/>
+        ) : null)}
+
+        {/* COMPLIANCE FLAGS */}
+        {report.complianceFlags?.length > 0 && (
+          <ReportSection title="Compliance & Safeguarding Flags" icon="🚩">
+            {report.complianceFlags.map((f,i)=>(
+              <div className="compliance-flag" key={i}>⚠️ {f}</div>
+            ))}
+          </ReportSection>
+        )}
+
+        <div className="sep"/>
+        <div style={{fontSize:'0.78rem',color:'var(--gray-500)',lineHeight:1.6}}>
+          Generated by ODC Plan Review Report Generator · One Dream Community · Report generated {new Date().toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'})} · This report is a draft and should be reviewed by the Support Coordinator before submission.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [step, setStep] = useState(1);
+  const [participant, setParticipant] = useState({});
+  const [files, setFiles] = useState([]);
+  const [report, setReport] = useState(null);
+  const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('odc_api_key') || '');
+
+  const saveKey = (k) => { setApiKey(k); sessionStorage.setItem('odc_api_key', k); };
+
+  const restart = () => { setStep(1); setParticipant({}); setFiles([]); setReport(null); };
+
+  const steps = [
+    {n:1,label:'Participant Info'},
+    {n:2,label:'Upload Reports'},
+    {n:3,label:'Generate'},
+    {n:4,label:'Review Report'},
+  ];
+
+  return (
+    <>
+      <nav className="nav">
+        <div className="nav-logo">One Dream <span>Community</span></div>
+        <span className="nav-badge">Plan Review Generator</span>
+        <div className="nav-divider"/>
+        <div className="nav-key-wrap">
+          <label>API Key</label>
+          <input
+            className="nav-key-input"
+            type="password"
+            placeholder="sk-ant-..."
+            value={apiKey}
+            onChange={e=>saveKey(e.target.value)}
+          />
+        </div>
+      </nav>
+
+      <div className="stepper-wrap">
+        <div className="stepper">
+          {steps.map(s=>(
+            <div key={s.n} className={`step${step===s.n?' active':step>s.n?' done':''}`}>
+              <div className="step-num">{step>s.n?'✓':s.n}</div>
+              {s.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="main">
+        {step===1 && <Step1 data={participant} onChange={setParticipant} onNext={()=>setStep(2)}/>}
+        {step===2 && <Step2 files={files} setFiles={setFiles} onNext={()=>setStep(3)} onBack={()=>setStep(1)}/>}
+        {step===3 && <Step3 participant={participant} files={files} apiKey={apiKey} onReport={r=>{setReport(r);setStep(4);}} onBack={()=>setStep(2)}/>}
+        {step===4 && report && <Report report={report} participant={participant} onBack={()=>setStep(3)} onRestart={restart}/>}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
